@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama API 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ollama API 测试工具</h1>
+    
+    <div class="test-section">
+        <h3>1. 测试连接</h3>
+        <button onclick="testConnection()">测试 Ollama 连接</button>
+        <div id="connection-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 获取模型列表</h3>
+        <button onclick="getModels()">获取模型</button>
+        <div id="models-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 测试非流式消息</h3>
+        <button onclick="testNonStreamMessage()">发送非流式消息</button>
+        <div id="non-stream-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 测试流式消息</h3>
+        <button onclick="testStreamMessage()">发送流式消息</button>
+        <div id="stream-result" class="result"></div>
+    </div>
+
+    <script>
+        const OLLAMA_URL = 'http://localhost:11434';
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.textContent = '正在测试连接...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(`${OLLAMA_URL}/api/tags`);
+                if (response.ok) {
+                    resultDiv.textContent = '✅ 连接成功！';
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ 连接失败: ${response.status} ${response.statusText}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 连接错误: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function getModels() {
+            const resultDiv = document.getElementById('models-result');
+            resultDiv.textContent = '正在获取模型列表...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(`${OLLAMA_URL}/api/tags`);
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.textContent = `✅ 获取成功:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ 获取失败: ${response.status} ${response.statusText}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 获取错误: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testNonStreamMessage() {
+            const resultDiv = document.getElementById('non-stream-result');
+            resultDiv.textContent = '正在发送非流式消息...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(`${OLLAMA_URL}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-r1:8b',
+                        prompt: '你好，请简单介绍一下你自己。',
+                        stream: false
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.textContent = `✅ 非流式响应成功:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ 非流式响应失败: ${response.status} ${response.statusText}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 非流式响应错误: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testStreamMessage() {
+            const resultDiv = document.getElementById('stream-result');
+            resultDiv.textContent = '正在发送流式消息...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(`${OLLAMA_URL}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-r1:8b',
+                        prompt: '你好，请简单介绍一下你自己。',
+                        stream: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    resultDiv.textContent = `❌ 流式响应失败: ${response.status} ${response.statusText}`;
+                    resultDiv.className = 'result error';
+                    return;
+                }
+                
+                resultDiv.textContent = '✅ 流式响应开始:\n';
+                resultDiv.className = 'result success';
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n').filter(line => line.trim());
+                    
+                    for (const line of lines) {
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.response) {
+                                resultDiv.textContent += data.response;
+                            }
+                            if (data.done) {
+                                resultDiv.textContent += '\n\n✅ 流式响应完成';
+                            }
+                        } catch (e) {
+                            console.log('解析JSON失败:', line);
+                        }
+                    }
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ 流式响应错误: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>
