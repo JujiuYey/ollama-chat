@@ -26,12 +26,19 @@ export class OllamaClient {
    */
   async generateResponse(request: OllamaRequest): Promise<OllamaResponse> {
     try {
+      const requestBody = {
+        ...request,
+        stream: false,
+        ...(request.system && { system: request.system }),
+        ...(request.options && { options: request.options })
+      };
+
       const response = await fetch(`${this.baseUrl}/api/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...request, stream: false }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -52,19 +59,31 @@ export class OllamaClient {
   async generateStreamResponse(
     prompt: string,
     model: string,
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    systemPrompt?: string,
+    options?: { temperature?: number; num_predict?: number }
   ): Promise<void> {
     try {
+      const requestBody: any = {
+        model,
+        prompt,
+        stream: true,
+      };
+
+      if (systemPrompt) {
+        requestBody.system = systemPrompt;
+      }
+
+      if (options) {
+        requestBody.options = options;
+      }
+
       const response = await fetch(`${this.baseUrl}/api/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model,
-          prompt,
-          stream: true,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

@@ -178,6 +178,11 @@ export function ChatInterface({ onOpenSettings }: ChatInterfaceProps) {
     signal: AbortSignal
   ) => {
     try {
+      const requestOptions = {
+        temperature: settings.temperature,
+        num_predict: settings.maxTokens
+      };
+
       if (settings.streamResponse) {
         // 流式响应
         // 先创建空的助手消息
@@ -201,7 +206,9 @@ export function ChatInterface({ onOpenSettings }: ChatInterfaceProps) {
               ...prev,
               content: streamingContentRef.current
             } : null);
-          }
+          },
+          settings.systemPrompt, // 传递系统提示词
+          requestOptions // 传递其他选项
         );
 
         const finalContent = streamingContentRef.current;
@@ -215,7 +222,9 @@ export function ChatInterface({ onOpenSettings }: ChatInterfaceProps) {
 
         const response = await ollamaClient.generateResponse({
           model: settings.selectedModel,
-          prompt: userContent
+          prompt: userContent,
+          system: settings.systemPrompt, // 添加系统提示词
+          options: requestOptions // 添加其他选项
         });
 
         if (!signal.aborted && response.response?.trim()) {

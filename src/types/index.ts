@@ -61,6 +61,12 @@ export interface OllamaRequest {
   model: string;
   prompt: string;
   stream?: boolean;
+  system?: string; 
+  temperature?: number;
+  options?: {
+    temperature?: number;
+    num_predict?: number;
+  };
 }
 
 // 模型列表响应接口
