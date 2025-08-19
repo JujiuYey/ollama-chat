@@ -1,8 +1,29 @@
 {
-  "name": "local-ai",
+  "name": "ollama-chat",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "一个基于React + TypeScript + Vite构建的现代化本地AI对话应用，专门为本地Ollama AI服务设计",
+  "keywords": [
+    "react",
+    "typescript",
+    "vite",
+    "ollama",
+    "ai",
+    "chat",
+    "local",
+    "deepseek"
+  ],
+  "author": "Joesph Falkenberg",
+  "license": "MIT",
+  "homepage": "https://github.com/JujiuYey/ollama-chat/blob/main/README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JujiuYey/ollama-chat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JujiuYey/ollama-chat/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
